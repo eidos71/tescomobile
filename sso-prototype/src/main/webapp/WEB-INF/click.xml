@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<click-app charset="UTF-8" locale="en">
+
+  
+  <pages package="com.opensso" automapping="true">
+  	 <page path="home.htm" classname="tutorial.page.HomePage"/>
+  	 <page path="border-template.htm" classname="tutorial.BorderPage"/>
+  	 <page path="accessDenied.htm" classname="tutorial.AccessDenied"/>
+  	 
+  </pages>
+  
+
+  <mode value="trace"/>
+
+</click-app>

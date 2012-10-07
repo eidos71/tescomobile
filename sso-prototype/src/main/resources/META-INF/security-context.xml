@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+	   xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/jee
+                           http://www.springframework.org/schema/jee/spring-jee.xsd
+						   http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd" 
+						   default-autowire="byType">
+
+
+
+  <!-- CAS service properties -->
+  <bean id="serviceProperties" class="org.springframework.security.ui.cas.ServiceProperties">
+    <property name="service" value="https://localhost:8443/tescosso/j_spring_cas_security_check" />
+    <property name="sendRenew" value="false" />
+  </bean>
+  
+  <bean id="userDetailService" class="com.opensso.security.UserDetailsService"/>
+  
+ <bean id="casAuthenticationProvider" class="org.springframework.security.providers.cas.CasAuthenticationProvider">
+    <security:custom-authentication-provider />
+    <property name="userDetailsService" ref="userDetailService"/>
+    <property name="serviceProperties" ref="serviceProperties" />
+    <property name="ticketValidator">
+      <bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+        <constructor-arg index="0" value="https://localhost:8443/cas" />
+        </bean>
+    </property>
+    <property name="key" value="an_id_for_this_auth_provider_only"/>
+  </bean>
+  
+  <bean id="casProcessingFilter" class="org.springframework.security.ui.cas.CasProcessingFilter">
+   <security:custom-filter after="CAS_PROCESSING_FILTER"/>
+   <property name="authenticationManager" ref="authenticationManager"/>
+   <property name="authenticationFailureUrl" value="/casfailed.jsp"/>
+   <property name="defaultTargetUrl" value="/"/>
+  </bean>
+
+  <bean id="casProcessingFilterEntryPoint"  class="org.springframework.security.ui.cas.CasProcessingFilterEntryPoint">
+   <property name="loginUrl" value="https://localhost:8443/cas/login"/>
+   <property name="serviceProperties" ref="serviceProperties"/>
+  </bean>
+
+  <!-- Logout properties. -->    
+  <bean id="casLogout" class="com.opensso.security.services.impl.CasLogoutImpl">
+	<property name="logoutURL" value="https://localhost:8443/cas/logout" />
+	<property name="systemHomePageURL" value="https://localhost:8443/tescosso" />
+  </bean>
+  
+  <!-- Access decision manager-->
+  <bean id="accessDecisionManager" class="org.springframework.security.vote.AffirmativeBased">
+   		<property name="decisionVoters">
+   			<list>
+   				<bean class="org.springframework.security.vote.AuthenticatedVoter"/>
+				<bean class="org.springframework.security.vote.RoleVoter">
+					<property name="rolePrefix" value=""/>
+				</bean>	
+   			</list>	
+   		</property>
+  </bean>
+  
+  <security:http auto-config="false" entry-point-ref="casProcessingFilterEntryPoint"
+		access-decision-manager-ref="accessDecisionManager"
+		access-denied-page="/accessDenied.htm">
+		<security:intercept-url pattern="/assets/**" filters="none"/> 
+		<security:intercept-url pattern="/**" access="tescosso.login" />
+		<security:logout />
+	</security:http>
+
+  
+  <security:authentication-provider user-service-ref="userDetailService"/>
+  <security:authentication-manager alias="authenticationManager"/>
+</beans>
